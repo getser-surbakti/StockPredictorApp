@@ -95,12 +95,13 @@
             color: #1a1a1a;
             font-family: 'Orbitron', sans-serif;
         }
-        canvas {
+        #priceChart {
             max-width: 100%;
             margin-top: 1rem;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 5px;
             padding: 1rem;
+            border: 1px solid #00d4ff;
         }
         .formula-section p {
             margin: 0.5rem 0;
@@ -112,11 +113,14 @@
         .mathjax {
             text-align: center;
             padding: 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            margin: 1rem 0;
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            margin: 0.5rem 0;
             color: #ffffff;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            box-shadow: 0 0 10px #00d4ff;
+            font-family: 'Roboto', sans-serif;
         }
         @keyframes glow {
             from { text-shadow: 0 0 5px #00d4ff; }
@@ -150,7 +154,7 @@
             <label for="forecast-steps">Jumlah Langkah Prediksi:</label>
             <input type="number" id="forecast-steps" min="1" value="5">
             <button onclick="predictStockPrice()">Prediksi Harga</button>
-            <!-- Hasil akan ditampilkan di sini -->
+            <!-- Hasil -->
             <div id="result-container" style="display: none;">
                 <h2>Hasil Prediksi</h2>
                 <table id="result-table">
@@ -182,6 +186,7 @@
     </div>
 
     <!-- MathJax untuk Rendering Rumus -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
     <script>
         window.MathJax = {
             tex: {
@@ -194,10 +199,9 @@
             }
         };
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 
     <!-- Chart.js untuk Grafik -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <!-- JavaScript untuk Logika ARIMA dan Grafik -->
     <script>
@@ -290,23 +294,32 @@
                         borderColor: '#00d4ff',
                         backgroundColor: 'rgba(0, 212, 255, 0.2)',
                         fill: false,
-                        tension: 0.1
+                        tension: 0.1,
+                        pointBackgroundColor: '#00d4ff',
+                        pointBorderColor: '#ffffff',
+                        pointRadius: 4
                     }]
                 },
                 options: {
+                    responsive: true,
                     scales: {
                         y: {
                             beginAtZero: false,
-                            title: { display: true, text: 'Harga', color: '#ffffff' },
+                            title: { display: true, text: 'Harga', color: '#ffffff', font: { family: 'Orbitron', size: 14 } },
                             ticks: { color: '#ffffff' }
                         },
                         x: {
-                            title: { display: true, text: 'Periode', color: '#ffffff' },
+                            title: { display: true, text: 'Periode', color: '#ffffff', font: { family: 'Orbitron', size: 14 } },
                             ticks: { color: '#ffffff' }
                         }
                     },
                     plugins: {
-                        legend: { labels: { color: '#ffffff' } }
+                        legend: { 
+                            labels: { 
+                                color: '#ffffff', 
+                                font: { family: 'Orbitron', size: 12 } 
+                            } 
+                        }
                     }
                 }
             });
