@@ -95,13 +95,19 @@
             color: #1a1a1a;
             font-family: 'Orbitron', sans-serif;
         }
-        #priceChart {
+        .chart-container {
+            position: relative;
             max-width: 100%;
             margin-top: 1rem;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 5px;
             padding: 1rem;
             border: 1px solid #00d4ff;
+            transition: height 0.5s ease;
+        }
+        #priceChart {
+            max-width: 100%;
+            height: 400px; /* Tinggi default untuk desktop */
         }
         .formula-section p {
             margin: 0.5rem 0;
@@ -130,11 +136,13 @@
             .container { margin: 1rem auto; padding: 0 0.75rem; }
             h1 { font-size: 1.5rem; }
             .input-section, .formula-section { padding: 1rem; }
+            #priceChart { height: 300px; } /* Kurangi tinggi pada tablet */
         }
         @media (max-width: 480px) {
             h1 { font-size: 1.2rem; }
             .input-section, .formula-section { padding: 0.75rem; }
             .input-section button { padding: 0.5rem; }
+            #priceChart { height: 200px; } /* Kurangi tinggi pada ponsel */
         }
     </style>
 </head>
@@ -167,7 +175,9 @@
                     </thead>
                     <tbody id="result-body"></tbody>
                 </table>
-                <canvas id="priceChart"></canvas>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -205,12 +215,15 @@
 
     <!-- JavaScript untuk Logika ARIMA dan Grafik -->
     <script>
+        let priceChart = null; // Variabel global untuk menyimpan instance grafik
+
         function predictStockPrice() {
             const dataInput = document.getElementById('historical-data').value;
             const phi = parseFloat(document.getElementById('phi').value);
             const theta = parseFloat(document.getElementById('theta').value);
             const steps = parseInt(document.getElementById('forecast-steps').value);
 
+            // Validasi input
             if (!dataInput || isNaN(phi) || isNaN(theta) || isNaN(steps)) {
                 alert('Harap masukkan semua data dengan benar.');
                 return;
@@ -222,11 +235,13 @@
                 return;
             }
 
+            // Hitung selisih data historis
             const differencedData = [];
             for (let i = 1; i < historicalData.length; i++) {
                 differencedData.push(historicalData[i] - historicalData[i - 1]);
             }
 
+            // Lakukan prediksi
             const forecasts = [];
             let lastDiff = differencedData[differencedData.length - 1];
             let lastPrice = historicalData[historicalData.length - 1];
@@ -235,7 +250,7 @@
             for (let t = 0; t < steps; t++) {
                 const arTerm = phi * (t === 0 ? lastDiff : forecasts[t - 1] - lastPrice);
                 const maTerm = theta * error;
-                const noise = Math.random() * 2 - 1;
+                const noise = Math.random() * 2 - 1; // Noise acak kecil
                 const diffForecast = arTerm + maTerm + noise;
                 const forecast = lastPrice + diffForecast;
 
@@ -244,6 +259,7 @@
                 lastPrice = forecast;
             }
 
+            // Tampilkan hasil dan gambar grafik
             displayResults(historicalData, forecasts);
             drawChart(historicalData, forecasts);
         }
@@ -253,6 +269,7 @@
             const resultBody = document.getElementById('result-body');
             resultBody.innerHTML = '';
 
+            // Tampilkan data historis
             historicalData.forEach((price, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -263,6 +280,7 @@
                 resultBody.appendChild(row);
             });
 
+            // Tampilkan data prediksi
             forecasts.forEach((price, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -273,44 +291,107 @@
                 resultBody.appendChild(row);
             });
 
+            // Pastikan container hasil terlihat
             resultContainer.style.display = 'block';
         }
 
         function drawChart(historicalData, forecasts) {
             const ctx = document.getElementById('priceChart').getContext('2d');
+            if (!ctx) {
+                console.error('Elemen canvas tidak ditemukan.');
+                return;
+            }
+
             const labels = [...Array(historicalData.length).keys()].map(i => `T-${historicalData.length - i - 1}`)
                 .concat([...Array(forecasts.length).keys()].map(i => `T+${i + 1}`));
-            const data = [...historicalData, ...forecasts];
 
-            if (window.priceChart) window.priceChart.destroy();
+            // Pisahkan data historis dan prediksi untuk dataset terpisah
+            const historicalDataset = historicalData.map((val, idx) => ({ x: labels[idx], y: val }));
+            const forecastDataset = forecasts.map((val, idx) => ({ x: labels[historicalData.length + idx], y: val }));
 
-            window.priceChart = new Chart(ctx, {
+            // Hancurkan grafik lama jika ada
+            if (priceChart) {
+                priceChart.destroy();
+            }
+
+            // Buat grafik baru
+            priceChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Harga Saham',
-                        data: data,
-                        borderColor: '#00d4ff',
-                        backgroundColor: 'rgba(0, 212, 255, 0.2)',
-                        fill: false,
-                        tension: 0.1,
-                        pointBackgroundColor: '#00d4ff',
-                        pointBorderColor: '#ffffff',
-                        pointRadius: 4
-                    }]
+                    datasets: [
+                        {
+                            label: 'Harga Historis',
+                            data: historicalDataset,
+                            borderColor: '#00d4ff',
+                            backgroundColor: 'rgba(0, 212, 255, 0.2)',
+                            fill: false,
+                            tension: 0.1,
+                            pointBackgroundColor: '#00d4ff',
+                            pointBorderColor: '#ffffff',
+                            pointRadius: 4,
+                            pointHoverRadius: 8,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Harga Prediksi',
+                            data: forecastDataset,
+                            borderColor: '#ff00ff', // Warna berbeda untuk prediksi
+                            backgroundColor: 'rgba(255, 0, 255, 0.2)',
+                            fill: false,
+                            tension: 0.1,
+                            pointBackgroundColor: '#ff00ff',
+                            pointBorderColor: '#ffffff',
+                            pointRadius: 4,
+                            pointHoverRadius: 8,
+                            borderWidth: 2,
+                            borderDash: [5, 5] // Garis putus-putus untuk prediksi
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false, // Pastikan grafik mengikuti ukuran canvas
+                    animation: {
+                        duration: 1000, // Animasi saat grafik muncul
+                        easing: 'easeInOutQuad'
+                    },
                     scales: {
                         y: {
                             beginAtZero: false,
-                            title: { display: true, text: 'Harga', color: '#ffffff', font: { family: 'Orbitron', size: 14 } },
-                            ticks: { color: '#ffffff' }
+                            title: { 
+                                display: true, 
+                                text: 'Harga', 
+                                color: '#ffffff', 
+                                font: { family: 'Orbitron', size: 14 } 
+                            },
+                            ticks: { 
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return value.toFixed(2); // Format angka dengan 2 desimal
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)', // Grid futuristik
+                                borderDash: [5, 5] // Garis grid putus-putus
+                            }
                         },
                         x: {
-                            title: { display: true, text: 'Periode', color: '#ffffff', font: { family: 'Orbitron', size: 14 } },
-                            ticks: { color: '#ffffff' }
+                            title: { 
+                                display: true, 
+                                text: 'Periode', 
+                                color: '#ffffff', 
+                                font: { family: 'Orbitron', size: 14 } 
+                            },
+                            ticks: { 
+                                color: '#ffffff',
+                                maxRotation: 45, // Rotasi label untuk layar kecil
+                                minRotation: 45
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                borderDash: [5, 5]
+                            }
                         }
                     },
                     plugins: {
@@ -319,11 +400,29 @@
                                 color: '#ffffff', 
                                 font: { family: 'Orbitron', size: 12 } 
                             } 
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { family: 'Orbitron', size: 14 },
+                            bodyFont: { family: 'Roboto', size: 12 },
+                            callbacks: {
+                                label: function(context) {
+                                    return `Harga: ${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
                         }
                     }
                 }
             });
         }
+
+        // Pastikan Chart.js dimuat sebelum fungsi dipanggil
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js tidak dimuat. Pastikan Anda terhubung ke internet atau muat file Chart.js secara lokal.');
+            }
+        });
     </script>
 </body>
 </html>
