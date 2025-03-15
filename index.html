@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARIMA Stock Predictor</title>
+    <title>Prediktor Harga Saham ARIMA</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
     <style>
         body {
@@ -109,73 +109,71 @@
             border-radius: 5px;
             text-align: center;
         }
-        /* Animasi Glow */
+        .mathjax {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin: 1rem 0;
+            color: #ffffff;
+            font-size: 1.1rem;
+        }
         @keyframes glow {
             from { text-shadow: 0 0 5px #00d4ff; }
             to { text-shadow: 0 0 15px #00d4ff, 0 0 25px #00d4ff; }
         }
-        /* Media Queries untuk Responsivitas */
         @media (max-width: 768px) {
-            .container {
-                margin: 1rem auto;
-                padding: 0 0.75rem;
-            }
-            h1 {
-                font-size: 1.5rem;
-            }
-            .input-section, .result-section, .formula-section {
-                padding: 1rem;
-            }
+            .container { margin: 1rem auto; padding: 0 0.75rem; }
+            h1 { font-size: 1.5rem; }
+            .input-section, .result-section, .formula-section { padding: 1rem; }
         }
         @media (max-width: 480px) {
-            h1 {
-                font-size: 1.2rem;
-            }
-            .input-section, .result-section, .formula-section {
-                padding: 0.75rem;
-            }
-            .input-section button {
-                padding: 0.5rem;
-            }
+            h1 { font-size: 1.2rem; }
+            .input-section, .result-section, .formula-section { padding: 0.75rem; }
+            .input-section button { padding: 0.5rem; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>ARIMA Stock Predictor</h1>
+        <h1>Prediktor Harga Saham ARIMA</h1>
         
         <!-- Input Section -->
         <div class="input-section">
-            <h2>Data Input</h2>
-            <label for="historical-data">Historical Stock Prices (comma-separated):</label>
-            <textarea id="historical-data" placeholder="Example: 100, 102, 105, 103, 107"></textarea>
-            <label for="phi">AR Parameter (φ₁, default 0.5):</label>
+            <h2>Masukkan Data</h2>
+            <label for="historical-data">Harga Saham Historis (pisahkan dengan koma):</label>
+            <textarea id="historical-data" placeholder="Contoh: 100, 102, 105, 103, 107"></textarea>
+            <label for="phi">Parameter AR (φ₁, default 0.5):</label>
             <input type="number" id="phi" step="0.1" min="-1" max="1" value="0.5">
-            <label for="theta">MA Parameter (θ₁, default 0.3):</label>
+            <label for="theta">Parameter MA (θ₁, default 0.3):</label>
             <input type="number" id="theta" step="0.1" min="-1" max="1" value="0.3">
-            <label for="forecast-steps">Forecast Steps:</label>
+            <label for="forecast-steps">Jumlah Langkah Prediksi:</label>
             <input type="number" id="forecast-steps" min="1" value="5">
-            <button onclick="predictStockPrice()">Predict Prices</button>
+            <button onclick="predictStockPrice()">Prediksi Harga</button>
         </div>
 
         <!-- Formula Section -->
         <div class="formula-section">
-            <h2>ARIMA(1,1,1) Formula Used</h2>
-            <p>Step 1: Difference = Current Price - Previous Price</p>
-            <p>Step 2: Forecast Difference = (φ₁ × Last Difference) + (θ₁ × Last Error) + Random Noise</p>
-            <p>Step 3: Predicted Price = Last Price + Forecast Difference</p>
-            <p style="font-size: 0.9rem;">Notes: φ₁ = AR factor, θ₁ = MA factor, Random Noise = small random value</p>
+            <h2>Rumus ARIMA(1,1,1) yang Digunakan</h2>
+            <p>Langkah 1: Selisih = Harga Saat Ini - Harga Sebelumnya</p>
+            <p>Langkah 2: Selisih Prediksi = (φ₁ × Selisih Terakhir) + (θ₁ × Kesalahan Terakhir) + Noise Acak</p>
+            <p>Langkah 3: Harga Prediksi = Harga Terakhir + Selisih Prediksi</p>
+            <p style="font-size: 0.9rem;">Catatan: φ₁ = Faktor AR, θ₁ = Faktor MA, Noise Acak = nilai acak kecil</p>
+            <h2>Rumus Matematika Asli</h2>
+            <div class="mathjax">\( \Delta y_t = y_t - y_{t-1} \)</div>
+            <div class="mathjax">\( \Delta y_t = \phi_1 \cdot \Delta y_{t-1} + \theta_1 \cdot \epsilon_{t-1} + \epsilon_t \)</div>
+            <div class="mathjax">\( y_t = y_{t-1} + \Delta y_t \)</div>
         </div>
 
         <!-- Result Section -->
         <div class="result-section" id="result-section" style="display: none;">
-            <h2>Prediction Results</h2>
+            <h2>Hasil Prediksi</h2>
             <table id="result-table">
                 <thead>
                     <tr>
-                        <th>Period</th>
-                        <th>Historical Price</th>
-                        <th>Predicted Price</th>
+                        <th>Periode</th>
+                        <th>Harga Historis</th>
+                        <th>Harga Prediksi</th>
                     </tr>
                 </thead>
                 <tbody id="result-body"></tbody>
@@ -184,32 +182,43 @@
         </div>
     </div>
 
+    <!-- MathJax untuk Rendering Rumus -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
     <!-- Chart.js untuk Grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- JavaScript untuk Logika ARIMA dan Grafik -->
     <script>
         function predictStockPrice() {
-            // Ambil input dari pengguna
             const dataInput = document.getElementById('historical-data').value;
             const phi = parseFloat(document.getElementById('phi').value);
             const theta = parseFloat(document.getElementById('theta').value);
             const steps = parseInt(document.getElementById('forecast-steps').value);
 
-            // Validasi input
             if (!dataInput || isNaN(phi) || isNaN(theta) || isNaN(steps)) {
-                alert('Please enter all data correctly.');
+                alert('Harap masukkan semua data dengan benar.');
                 return;
             }
 
-            // Parse data historis
             const historicalData = dataInput.split(',').map(num => parseFloat(num.trim())).filter(num => !isNaN(num));
             if (historicalData.length < 2) {
-                alert('Enter at least 2 historical data points.');
+                alert('Masukkan setidaknya 2 data historis.');
                 return;
             }
 
-            // Implementasi sederhana ARIMA(1,1,1)
             const differencedData = [];
             for (let i = 1; i < historicalData.length; i++) {
                 differencedData.push(historicalData[i] - historicalData[i - 1]);
@@ -218,22 +227,20 @@
             const forecasts = [];
             let lastDiff = differencedData[differencedData.length - 1];
             let lastPrice = historicalData[historicalData.length - 1];
-            let error = 0; // Simulasi error awal
+            let error = 0;
 
             for (let t = 0; t < steps; t++) {
-                // ARIMA(1,1,1): Forecast Difference = φ₁ * Last Difference + θ₁ * Last Error + Noise
                 const arTerm = phi * (t === 0 ? lastDiff : forecasts[t - 1] - lastPrice);
                 const maTerm = theta * error;
-                const noise = Math.random() * 2 - 1; // Simulasi noise sederhana (-1 hingga 1)
+                const noise = Math.random() * 2 - 1;
                 const diffForecast = arTerm + maTerm + noise;
                 const forecast = lastPrice + diffForecast;
 
                 forecasts.push(forecast);
-                error = diffForecast - arTerm; // Update error untuk MA
-                lastPrice = forecast; // Update harga terakhir untuk iterasi berikutnya
+                error = diffForecast - arTerm;
+                lastPrice = forecast;
             }
 
-            // Tampilkan hasil
             displayResults(historicalData, forecasts);
             drawChart(historicalData, forecasts);
         }
@@ -242,8 +249,7 @@
             const resultSection = document.getElementById('result-section');
             const resultBody = document.getElementById('result-body');
             resultBody.innerHTML = '';
-            
-            // Tampilkan data historis
+
             historicalData.forEach((price, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -254,7 +260,6 @@
                 resultBody.appendChild(row);
             });
 
-            // Tampilkan data prediksi
             forecasts.forEach((price, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -274,14 +279,14 @@
                 .concat([...Array(forecasts.length).keys()].map(i => `T+${i + 1}`));
             const data = [...historicalData, ...forecasts];
 
-            if (window.priceChart) window.priceChart.destroy(); // Hancurkan grafik lama jika ada
+            if (window.priceChart) window.priceChart.destroy();
 
             window.priceChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Stock Price',
+                        label: 'Harga Saham',
                         data: data,
                         borderColor: '#00d4ff',
                         backgroundColor: 'rgba(0, 212, 255, 0.2)',
@@ -293,11 +298,11 @@
                     scales: {
                         y: {
                             beginAtZero: false,
-                            title: { display: true, text: 'Price', color: '#ffffff' },
+                            title: { display: true, text: 'Harga', color: '#ffffff' },
                             ticks: { color: '#ffffff' }
                         },
                         x: {
-                            title: { display: true, text: 'Period', color: '#ffffff' },
+                            title: { display: true, text: 'Periode', color: '#ffffff' },
                             ticks: { color: '#ffffff' }
                         }
                     },
